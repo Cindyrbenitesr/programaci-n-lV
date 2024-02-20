@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Lectura</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+
+        
+       nav {
+    background-color: #F4C5D7;
+    color: #E981A4;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+nav ul li {
+    float: left;
+}
+
+nav ul li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+nav ul li a:hover {
+    background-color: #111;
+}
+    </style>
+</head>
+<body>
+
+    <nav>
+        <ul>
+            <li><a href="clientes.html">Cliente</a></li>
+            <li><a href="lectura.html">Lectura</a></li>
+  
+        </ul>
+    </nav>
+
+
+    <div class="container">
+        <h1>Formulario de Lectura</h1>
+        <form id="lecturaForm">
+            <div class="form-group">
+                <label for="idLectura">ID de Lectura:</label>
+                <input type="text" class="form-control" id="idLectura" required>
+            </div>
+
+            <div class="form-group">
+                <label for="cliente">Cliente:</label>
+                <select class="form-control" id="cliente" required>
+                    <!-- Opciones de clientes se generarán dinámicamente aquí -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="lectura_anterior">Lectura Anterior:</label>
+                <input type="number" class="form-control" id="lectura_anterior" required>
+            </div>
+            <div class="form-group">
+                <label for="lectura_actual">Lectura Actual:</label>
+                <input type="number" class="form-control" id="lectura_actual" required>
+            </div>
+            <div class="form-group">
+                <label for="pago">Pago:</label>
+                <input type="text" class="form-control" id="pago" readonly>
+            </div>
+            <button type="submit" class="btn btn-primary">Agregar</button>
+        </form>
+        <hr>
+        <h2>Lecturas</h2>
+        <input type="text" id="buscar" class="form-control" placeholder="Buscar...">
+        <div id="lecturasTable">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID Lectura</th>
+                        <th>Cliente</th>
+                        <th>Lectura Anterior</th>
+                        <th>Lectura Actual</th>
+                        <th>Pago</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="lecturasBody">
+                    <!-- Aquí se llenará dinámicamente la tabla con JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper.js and Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            // Cargar las lecturas almacenadas al cargar la página por primera vez
+            const lecturasGuardadas = JSON.parse(localStorage.getItem('lecturas')) || [];
+            lecturasGuardadas.forEach(lectura => {
+                mostrarLecturaEnTabla(lectura);
+            });
+
+            // Obtener los clientes almacenados
+            const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+
+            // Mostrar clientes en el select
+            const clienteDropdown = document.getElementById('cliente');
+            clienteDropdown.innerHTML = '';
+            clientes.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.nombre;
+                option.textContent = cliente.nombre;
+                clienteDropdown.appendChild(option);
+            });
+
+            // Manejar el envío del formulario
+            const form = document.getElementById('lecturaForm');
+            form.addEventListener('submit', e => {
+                e.preventDefault();
+
+                // Obtener datos del formulario
+                const idLectura = document.getElementById('idLectura').value;
+                const cliente = document.getElementById('cliente').value;
+                const lecturaAnterior = parseInt(document.getElementById('lectura_anterior').value);
+                const lecturaActual = parseInt(document.getElementById('lectura_actual').value);
+                const pago = calcularPago(lecturaAnterior, lecturaActual);
+
+                // Guardar datos en el almacenamiento local
+                const lectura = {
+                    id: idLectura,
+                    cliente: cliente,
+                    lecturaAnterior: lecturaAnterior,
+                    lecturaActual: lecturaActual,
+                    pago: pago
+                };
+                guardarLectura(lectura);
+
+                // Mostrar datos en la tabla
+                mostrarLecturaEnTabla(lectura);
+            });
+
+            // Manejar el clic en el botón Eliminar
+            document.getElementById('lecturasTable').addEventListener('click', e => {
+                if (e.target && e.target.nodeName === 'BUTTON' && e.target.classList.contains('btn-danger')) {
+                    // Obtener la fila a eliminar
+                    const row = e.target.closest('tr');
+                    // Obtener el ID de la lectura
+                    const id = row.cells[0].textContent;
+                    // Eliminar la fila de la tabla
+                    row.remove();
+                    // Eliminar la lectura del almacenamiento local
+                    eliminarLectura(id);
+                }
+            });
+        });
+
+        // Función para calcular el pago
+        function calcularPago(lecturaAnterior, lecturaActual) {
+            // Aquí puedes implementar la lógica de cálculo del pago según los metros consumidos
+            const metrosConsumidos = lecturaActual - lecturaAnterior;
+            const tarifaPorMetro = 0.05; // Por ejemplo, 0.05 dólares por metro
+            return metrosConsumidos * tarifaPorMetro;
+        }
+
+        // Función para guardar lectura en el almacenamiento local
+        function guardarLectura(lectura) {
+            const lecturas = JSON.parse(localStorage.getItem('lecturas')) || [];
+            lecturas.push(lectura);
+            localStorage.setItem('lecturas', JSON.stringify(lecturas));
+        }
+
+        // Función para mostrar la lectura en la tabla
+        function mostrarLecturaEnTabla(lectura) {
+            const tableBody = document.getElementById('lecturasBody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${lectura.id}</td>
+                <td>${lectura.cliente}</td>
+                <td>${lectura.lecturaAnterior}</td>
+                <td>${lectura.lecturaActual}</td>
+                <td>${lectura.pago}</td>
+                
+            `;
+            tableBody.appendChild(row);
+        }
+
+   
+   
+    </script>
+</body>
+</html>
